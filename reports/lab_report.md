@@ -1,39 +1,10 @@
-"""Report generation helper.
-
-Renders complete lab report from MetricsReport data and template structure.
-"""
-
-from __future__ import annotations
-
-from datetime import datetime
-from pathlib import Path
-
-from .metrics import MetricsReport
-
-
-def render_report(metrics: MetricsReport) -> str:
-    """Render a complete lab report from metrics data."""
-    scenario_rows = []
-    for s in metrics.scenario_metrics:
-        success_icon = "PASS" if s.success else "FAIL"
-        actual = s.actual_route or "N/A"
-        row = (
-            f"| {s.scenario_id} | {s.expected_route} | {actual} | {success_icon} | "
-            f"{s.retry_count} | {s.interrupt_count} | {s.nodes_visited} |"
-        )
-        scenario_rows.append(row)
-    scenarios_table = "\n".join(scenario_rows)
-
-    date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    resume_str = "Yes (SQLite WAL)" if metrics.resume_success else "Yes"
-
-    report_content = f"""# Day 08 Lab Report — LangGraph Agentic Orchestration
+# Day 08 Lab Report — LangGraph Agentic Orchestration
 
 ## 1. Team / Student Information
 
 - **Student Name**: Nguyen Minh Phuc
 - **Repo / Project**: day08-langgraph-agent-lab
-- **Date**: {date_str}
+- **Date**: 2026-08-25 11:47:38
 - **Status**: Completed (100% Scenario Success Rate)
 
 ---
@@ -122,18 +93,24 @@ for current execution pointers.
 
 ### Summary Metrics
 
-- **Total Scenarios Executed**: {metrics.total_scenarios}
-- **Success Rate**: {metrics.success_rate:.2%}
-- **Average Nodes Visited**: {metrics.avg_nodes_visited:.2f}
-- **Total Retries Observed**: {metrics.total_retries}
-- **Total Interrupts / Approvals**: {metrics.total_interrupts}
-- **Persistence Resume Verified**: {resume_str}
+- **Total Scenarios Executed**: 7
+- **Success Rate**: 100.00%
+- **Average Nodes Visited**: 6.43
+- **Total Retries Observed**: 3
+- **Total Interrupts / Approvals**: 2
+- **Persistence Resume Verified**: Yes (SQLite WAL)
 
 ### Detailed Results Table
 
 | Scenario ID | Expected Route | Actual Route | Result | Retries | Interrupts | Nodes Visited |
 |---|---|---|---|---:|---:|---:|
-{scenarios_table}
+| S01_simple | simple | simple | PASS | 0 | 0 | 4 |
+| S02_tool | tool | tool | PASS | 0 | 0 | 6 |
+| S03_missing | missing_info | missing_info | PASS | 0 | 0 | 4 |
+| S04_risky | risky | risky | PASS | 0 | 1 | 8 |
+| S05_error | error | error | PASS | 2 | 0 | 10 |
+| S06_delete | risky | risky | PASS | 0 | 1 | 8 |
+| S07_dead_letter | error | error | PASS | 1 | 0 | 5 |
 
 ---
 
@@ -181,12 +158,3 @@ If deploying this agent to high-scale production:
 2. **PostgreSQL Checkpointer**: Migrate from SQLite to PostgresSaver with connection pools.
 3. **OpenTelemetry / LangSmith Tracing**: Instrument every node execution with OpenTelemetry.
 4. **Multi-turn Clarification**: Extend `clarify` flow to accept asynchronous user replies.
-"""
-    return report_content
-
-
-def write_report(metrics: MetricsReport, output_path: str | Path) -> None:
-    """Write the rendered report to a file."""
-    path = Path(output_path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(render_report(metrics), encoding="utf-8")
